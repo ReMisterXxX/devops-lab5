@@ -30,6 +30,15 @@ def test_divide_by_zero():
         calculator.divide(1, 0)
 
 
+def test_power():
+    assert calculator.power(2, 10) == 1024
+
+
+def test_api_power():
+    response = app.test_client().get("/api/power?a=2&b=3")
+    assert response.get_json()["result"] == 8
+
+
 def test_api_add():
     response = app.test_client().get("/api/add?a=2&b=3")
     assert response.status_code == 200

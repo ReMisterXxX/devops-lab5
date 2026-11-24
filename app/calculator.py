@@ -16,9 +16,14 @@ def divide(a, b):
     return a / b
 
 
+def power(a, b):
+    return a ** b
+
+
 OPERATIONS = {
     "add": add,
     "subtract": subtract,
     "multiply": multiply,
     "divide": divide,
+    "power": power,
 }
