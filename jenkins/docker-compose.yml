@@ -1,0 +1,41 @@
+name: lab5
+
+services:
+  jenkins:
+    build: .
+    container_name: lab5_jenkins
+    user: root
+    environment:
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:-admin123}
+      REPO_URL: ${REPO_URL}
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - lab5_net
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: lab5_mailhog
+    ports:
+      - "8025:8025"
+    networks:
+      - lab5_net
+
+  smee:
+    image: node:20-alpine
+    container_name: lab5_smee
+    command: npx -y smee-client --url ${SMEE_URL} --target "http://jenkins:8080/git/notifyCommit?url=${REPO_URL}"
+    depends_on:
+      - jenkins
+    networks:
+      - lab5_net
+
+volumes:
+  jenkins_home:
+
+networks:
+  lab5_net:
+    name: lab5_net

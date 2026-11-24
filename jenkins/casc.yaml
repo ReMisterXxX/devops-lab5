@@ -1,0 +1,82 @@
+jenkins:
+  systemMessage: "Lab5 DevOps - Jenkins skonfigurowany przez Configuration as Code"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          name: "Administrator"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+    adminAddress: "jenkins@lab5.local"
+  mailer:
+    smtpHost: "mailhog"
+    smtpPort: "1025"
+    defaultSuffix: "@lab5.local"
+
+jobs:
+  - script: |
+      pipelineJob('lab5-pipeline') {
+        description('Pipeline CI/CD dla galezi main (Jenkinsfile z repozytorium)')
+        properties {
+          pipelineTriggers {
+            triggers {
+              pollSCM {
+                scmpoll_spec('')
+              }
+            }
+          }
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${REPO_URL}')
+                }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }
+  - script: |
+      multibranchPipelineJob('lab5-multibranch') {
+        description('Pipeline dla galezi roboczych: feature/*, develop, release/*')
+        branchSources {
+          branchSource {
+            source {
+              git {
+                id('lab5-git')
+                remote('${REPO_URL}')
+                traits {
+                  gitBranchDiscovery()
+                  headWildcardFilter {
+                    includes('develop feature/* release/*')
+                    excludes('')
+                  }
+                }
+              }
+            }
+          }
+        }
+        triggers {
+          periodicFolderTrigger {
+            interval('5m')
+          }
+        }
+        orphanedItemStrategy {
+          discardOldItems {
+            numToKeep(10)
+          }
+        }
+      }
